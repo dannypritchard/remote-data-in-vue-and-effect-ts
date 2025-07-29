@@ -1,40 +1,11 @@
-# vue-effect
+# Vue 3 Remote Data Composable with Effect‑TS
 
-This template should help get you started developing with Vue 3 in Vite.
+A small example showing how to build a reusable Vue 3 composable for loading remote data with [Effect‑TS](https://effect.website/) and [Effect Schema](https://effect.website/docs/schema/introduction/). It handles all the common states—`NotAsked`, `Loading`, `Success`, and `Failure`—and integrates network errors, JSON parsing errors, and schema validation errors into a single, type‑safe API.
 
-## Recommended IDE Setup
+## Features
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
-# remote-data-in-vue-and-effect-ts
+- ✅ **Zero-boilerplate** remote-data state management
+- 🚀 Built on top of **Effect‑TS** for powerful effectful workflows
+- 🛡️ Automatic **schema validation** with `effect/Schema`
+- 🔄 Built‑in `_tag`‑based union for easy UI branching
+- 🔄 `load`, `reset` actions exposed from the composable
