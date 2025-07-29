@@ -1,11 +1,15 @@
-<script setup lang="ts"></script>
-
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
+  <p v-if="state._tag === 'NotAsked'">
+    Click to load data
+    <button @click="load">Load Data</button>
   </p>
+  <p v-else-if="state._tag === 'Loading'">Loading...</p>
+  <p v-else-if="state._tag === 'Success'">Data: {{ state.data }}</p>
+  <p v-else-if="state._tag === 'Failure'">Error: {{ state.error }}</p>
 </template>
 
-<style scoped></style>
+<script setup lang="ts">
+import { useRemoteDataEffect } from './composables/remoteData'
+
+const { load, state } = useRemoteDataEffect(() => fetch('https://asdfasdf.typicode.com/todos/1'))
+</script>
