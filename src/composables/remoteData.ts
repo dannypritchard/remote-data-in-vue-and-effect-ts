@@ -1,63 +1,70 @@
-import { ref } from 'vue'
-import { Data, Effect } from 'effect'
-
-// Define custom error types
+import { ref } from 'vue';
+import { Data, Effect, Either, Schema } from 'effect';
+import type { ParseError } from 'effect/ParseResult';
 export class NetworkError extends Data.TaggedError('NetworkError')<{
-  readonly cause: unknown
+    readonly cause: unknown;
 }> {}
 
 export class JsonParseError extends Data.TaggedError('JsonParseError')<{
-  readonly cause: unknown
+    readonly cause: unknown;
 }> {}
 
 export type RemoteData<T, E> = Data.TaggedEnum<{
-  NotAsked: object
-  Loading: object
-  Success: { readonly data: T }
-  Failure: { readonly error: E }
-}>
+    NotAsked: object;
+    Loading: object;
+    Success: { readonly data: T };
+    Failure: { readonly error: E };
+}>;
 
-export function useRemoteDataEffect<T>(fetchEffect: () => Promise<Response>) {
-  const { NotAsked, Loading, Success, Failure } =
-    Data.taggedEnum<RemoteData<T, NetworkError | JsonParseError>>()
+export function useRemoteDataEffect<T>(
+    fetchEffect: () => Promise<Response>,
+    schema?: Schema.Schema<T>,
+) {
+    const { NotAsked, Loading, Success, Failure } =
+        Data.taggedEnum<RemoteData<T, NetworkError | JsonParseError | ParseError>>();
 
-  const state = ref<RemoteData<T, NetworkError | JsonParseError>>(NotAsked())
+    const state = ref<RemoteData<T, NetworkError | JsonParseError | ParseError>>(NotAsked());
 
-  const fetchData = Effect.gen(function* () {
-    state.value = Loading()
+    const fetchData = Effect.gen(function* () {
+        state.value = Loading();
 
-    const response = yield* Effect.sandbox(Effect.promise(() => fetchEffect())).pipe(
-      Effect.catchAll((error) => new NetworkError({ cause: error })),
-    )
+        const response = yield* Effect.tryPromise({
+            try: fetchEffect,
+            catch: (cause) => new NetworkError({ cause }),
+        });
 
-    const data = yield* Effect.tryPromise({
-      try: () => response.json() as Promise<T>,
-      catch: (cause) => new JsonParseError({ cause }),
-    })
+        let data = yield* Effect.tryPromise({
+            try: () => response.json(),
+            catch: (cause) => new JsonParseError({ cause }),
+        });
 
-    state.value = Success({ data })
-  }).pipe(
-    Effect.catchTags({
-      NetworkError: (error) => {
-        state.value = Failure({ error })
-        return Effect.fail(error)
-      },
-      JsonParseError: (error) => {
-        state.value = Failure({ error })
-        return Effect.fail(error)
-      },
-    }),
-  )
+        if (schema) {
+            data = yield* Schema.decodeUnknown(schema)(data);
+        }
 
-  const runLoad = () => Effect.runPromise(fetchData)
+        return data as T;
+    });
 
-  const reset = () => {
-    state.value = NotAsked()
-  }
+    const load = async () => {
+        const result = await Effect.runPromise(Effect.either(fetchData));
 
-  return {
-    state,
-    load: runLoad,
-    reset,
-  }
+        return Either.match(result, {
+            onLeft: (error) => {
+                state.value = Failure({ error });
+            },
+            onRight: (data) => {
+                state.value = Success({ data });
+            },
+        });
+    };
+
+    const reset = () => {
+        state.value = NotAsked();
+    };
+
+    return {
+        state,
+        load,
+        reset,
+    };
 }
