@@ -37,3 +37,4 @@ npm run build
 ```sh
 npm run lint
 ```
+# remote-data-in-vue-and-effect-ts
